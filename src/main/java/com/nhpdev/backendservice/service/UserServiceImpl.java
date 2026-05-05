@@ -9,6 +9,7 @@ import com.nhpdev.backendservice.dto.response.UserUpdateResponse;
 import com.nhpdev.backendservice.entity.User;
 import com.nhpdev.backendservice.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,6 +20,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class UserServiceImpl implements UserService{
     private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
 
     @Override
     public UserDetailResponse createUser(UserCreateRequest request) {
@@ -29,7 +31,7 @@ public class UserServiceImpl implements UserService{
         User newUser = User.builder()
                 .email(request.email())
                 .username(request.username())
-                .password(request.password())
+                .password(passwordEncoder.encode(request.password()))
                 .build();
         User savedUser = userRepository.save(newUser);
         return UserDetailResponse.builder()
@@ -69,11 +71,11 @@ public class UserServiceImpl implements UserService{
     public UserChangePasswordResponse changePassword(String id, UserChangePasswordRequest request) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("User is not exist!"));
-        if(!user.getPassword().equals(request.oldPassword()))
+        if(!passwordEncoder.matches(request.oldPassword(), user.getPassword()))
             throw new RuntimeException("Wrong password!");
         if(!request.newPassword().equals(request.newPassword2()))
             throw new RuntimeException("New passwords unmatch");
-        user.setPassword(request.newPassword());
+        user.setPassword(passwordEncoder.encode(request.newPassword()));
         User updatedUser = userRepository.save(user);
         return UserChangePasswordResponse.builder()
                 .id(updatedUser.getId())

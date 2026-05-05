@@ -34,6 +34,10 @@ springdoc:
   api-docs:
     path: /api-docs
 
+jwt:
+  access_key: ${JWT_ACCESS_KEY}
+  refresh_key: ${JWT_REFRESH_KEY}
+
 logging:
   level:
     org:
