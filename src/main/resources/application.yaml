@@ -1,0 +1,5 @@
+spring:
+  application:
+    name: backend-service
+  profiles:
+    active: dev
