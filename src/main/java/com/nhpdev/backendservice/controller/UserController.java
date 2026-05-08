@@ -10,6 +10,8 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -51,6 +53,17 @@ public class UserController {
     @GetMapping("/{id}")
     public ApiResponse<UserDetailResponse> getUserById(@PathVariable String id) {
         return ApiResponse.<UserDetailResponse>success(userService.getUserById(id));
+    }
+
+    @PreAuthorize("#id == authentication.principal.id")
+    @GetMapping("/me")
+    public ApiResponse<UserDetailResponse> showMyInfo(@AuthenticationPrincipal Jwt jwt) {
+        String userId = jwt.getSubject();
+        return ApiResponse.<UserDetailResponse>builder()
+                .ok(true)
+                .data(userService.showMyInfo(userId))
+                .code(HttpStatus.OK.value())
+                .build();
     }
 
     @PreAuthorize("hasRole('ADMIN') or #id == authentication.principal.id")

@@ -20,4 +20,5 @@ public interface UserService {
     UserChangePasswordResponse changePassword (String id, UserChangePasswordRequest request);
     void deleteUser(String id);
     AssignRoleResponse assignRole(String userId, AssignRoleRequest request);
+    UserDetailResponse showMyInfo(String userId);
 }

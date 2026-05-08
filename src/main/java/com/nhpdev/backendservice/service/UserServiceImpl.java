@@ -117,6 +117,18 @@ public class UserServiceImpl implements UserService{
                 .build();
     }
 
+    @Override
+    public UserDetailResponse showMyInfo(String userId) {
+        return userRepository.findById(userId)
+                .map(user -> UserDetailResponse.builder()
+                        .id(user.getId())
+                        .email(user.getEmail())
+                        .username(user.getUsername())
+                        .status(user.getStatus().name())
+                        .build())
+                .orElseThrow(() -> new RuntimeException("User is not exist"));
+    }
+
     private UserDetailResponse mapToUserDetailResponse(User user) {
         return UserDetailResponse.builder()
                 .id(user.getId())
