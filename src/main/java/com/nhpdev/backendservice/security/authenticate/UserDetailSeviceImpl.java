@@ -1,4 +1,4 @@
-package com.nhpdev.backendservice.security;
+package com.nhpdev.backendservice.security.authenticate;
 
 import com.nhpdev.backendservice.repository.UserRepository;
 import lombok.RequiredArgsConstructor;

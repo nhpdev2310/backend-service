@@ -1,12 +1,17 @@
 package com.nhpdev.backendservice.service;
 
+import com.nhpdev.backendservice.dto.request.AssignRoleRequest;
 import com.nhpdev.backendservice.dto.request.UserChangePasswordRequest;
 import com.nhpdev.backendservice.dto.request.UserCreateRequest;
 import com.nhpdev.backendservice.dto.request.UserUpdateRequest;
+import com.nhpdev.backendservice.dto.response.AssignRoleResponse;
 import com.nhpdev.backendservice.dto.response.UserChangePasswordResponse;
 import com.nhpdev.backendservice.dto.response.UserDetailResponse;
 import com.nhpdev.backendservice.dto.response.UserUpdateResponse;
+import com.nhpdev.backendservice.entity.Role;
 import com.nhpdev.backendservice.entity.User;
+import com.nhpdev.backendservice.entity.UserHasRole;
+import com.nhpdev.backendservice.repository.RoleRepository;
 import com.nhpdev.backendservice.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -20,6 +25,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class UserServiceImpl implements UserService{
     private final UserRepository userRepository;
+    private final RoleRepository roleRepository;
     private final PasswordEncoder passwordEncoder;
 
     @Override
@@ -33,6 +39,11 @@ public class UserServiceImpl implements UserService{
                 .username(request.username())
                 .password(passwordEncoder.encode(request.password()))
                 .build();
+        Role role = roleRepository.findRoleByName("USER")
+                .orElseGet(() -> Role.builder()
+                        .name("USER")
+                        .build());
+        newUser.addRole(role);
         User savedUser = userRepository.save(newUser);
         return UserDetailResponse.builder()
                 .id(savedUser.getId())
@@ -88,6 +99,22 @@ public class UserServiceImpl implements UserService{
         if (!userRepository.existsById(id))
             throw new RuntimeException("User is not exist");
         userRepository.deleteById(id);
+    }
+
+    @Override
+    public AssignRoleResponse assignRole(String userId, AssignRoleRequest request) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User is not exists"));
+        Role role = roleRepository.findRoleByName(request.roleName())
+                .orElseThrow(() -> new RuntimeException("Role is not exist"));
+        user.addRole(role);
+        User savedUser = userRepository.save(user);
+        return AssignRoleResponse.builder()
+                .userId(savedUser.getId())
+                .roles(savedUser.getUserHasRoles().stream()
+                        .map(UserHasRole::getRole)
+                        .map(Role::getName).toList())
+                .build();
     }
 
     private UserDetailResponse mapToUserDetailResponse(User user) {

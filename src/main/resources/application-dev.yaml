@@ -10,10 +10,17 @@ spring:
     password: ${DB_PASSWORD}
     driver-class-name: org.postgresql.Driver
 
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      password: ${REDIS_PASSWORD}
+    cache:
+      type: redis
+
   jpa:
-#    show_sql: true
     hibernate:
-      ddl-auto: create-drop
+      ddl-auto: update
     properties:
       hibernate:
         format_sql: true
@@ -42,10 +49,17 @@ logging:
   level:
     org:
       hibernate:
+        engine:
+          jdbc:
+            env:
+              internal:
+                JdbcEnvironmentInitiator: DEBUG
         SQL: DEBUG
         type:
           descriptor:
             sql:
               BasicBinder: TRACE
 
-
+admin:
+  admin_email: ${ADMIN_EMAIL}
+  admin_password: ${ADMIN_PASSWORD}

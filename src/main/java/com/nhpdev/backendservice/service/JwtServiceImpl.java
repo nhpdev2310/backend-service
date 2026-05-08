@@ -1,7 +1,6 @@
 package com.nhpdev.backendservice.service;
 
 import com.nimbusds.jose.JOSEException;
-import com.nimbusds.jose.JOSEObjectType;
 import com.nimbusds.jose.JWSAlgorithm;
 import com.nimbusds.jose.JWSHeader;
 import com.nimbusds.jose.crypto.MACSigner;
@@ -12,6 +11,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.temporal.ChronoUnit;
 import java.util.Date;
+import java.util.List;
 
 @Service
 public class JwtServiceImpl implements JwtService{
@@ -22,7 +22,7 @@ public class JwtServiceImpl implements JwtService{
     private String refreshKey;
 
     @Override
-    public String generateAccessToken(String userId) {
+    public String generateAccessToken(String userId, List<String> authorities) {
         //HEADER
         JWSHeader jwsHeader = new JWSHeader(JWSAlgorithm.HS256);
         //BODY
@@ -31,7 +31,7 @@ public class JwtServiceImpl implements JwtService{
                 .subject(userId)
                 .issuer("http://locahost:8080")
                 .expirationTime(expirationDate)
-                .claim("authorities", "GUEST")
+                .claim("authorities", authorities)
                 .build();
         //SIGN
         SignedJWT signedJWT = new SignedJWT(jwsHeader, jwtClaimsSet);
@@ -62,5 +62,14 @@ public class JwtServiceImpl implements JwtService{
         } catch (JOSEException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    @Override
+    public List<String> extractAuthorities(Object authorities) {
+        if(authorities == null)
+            return List.of();
+        else if(authorities instanceof List<?> list)
+            return list.stream().map(String::valueOf).toList();
+        return List.of();
     }
 }
