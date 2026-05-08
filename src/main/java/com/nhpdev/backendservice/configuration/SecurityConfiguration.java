@@ -13,6 +13,7 @@ import org.springframework.security.config.annotation.method.configuration.Enabl
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -25,7 +26,7 @@ import org.springframework.security.web.SecurityFilterChain;
 @RequiredArgsConstructor
 public class SecurityConfiguration {
     public final CustomJwtDecoder customJwtDecoder;
-    private final String[] PUBLIC_ENDPOINT = {"/api/v1/auth/**",
+    private static final String[] PUBLIC_ENDPOINT = {"/api/v1/auth/**",
             "/api/v1/auth/login"
             , "/swagger-ui/**", "/swagger-ui.html", "/api-docs/**"};
     @Bean
@@ -33,6 +34,8 @@ public class SecurityConfiguration {
                                                    JwtAuthenticationConverter jwtAuthenticationConverter) {
         http
                 .csrf(AbstractHttpConfigurer::disable)
+                .sessionManagement(session ->
+                        session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers(PUBLIC_ENDPOINT).permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/v1/users").permitAll()
@@ -42,7 +45,10 @@ public class SecurityConfiguration {
                         .jwt(jwtConfigurer -> jwtConfigurer
                                 .decoder(customJwtDecoder)
                                 .jwtAuthenticationConverter(jwtAuthenticationConverter))
+                        .authenticationEntryPoint(new JwtAuthenticationEntryPoint())
+                        .accessDeniedHandler(new JwtAccessDeniedHandler())
                 );
+
         return http.build();
     }
 
