@@ -8,6 +8,8 @@ import com.nhpdev.backendservice.dto.response.RoleDetailResponse;
 import com.nhpdev.backendservice.entity.Permission;
 import com.nhpdev.backendservice.entity.Role;
 import com.nhpdev.backendservice.entity.RoleHasPermission;
+import com.nhpdev.backendservice.exception.BackendServiceException;
+import com.nhpdev.backendservice.exception.ErrorCode;
 import com.nhpdev.backendservice.repository.PermissionRepository;
 import com.nhpdev.backendservice.repository.RoleRepository;
 import lombok.RequiredArgsConstructor;
@@ -33,14 +35,14 @@ public class RoleServiceImpl implements RoleService{
     @Transactional(readOnly = true)
     public Role findRoleByName(RoleName roleName) {
         return roleRepository.findRoleByName(roleName.name())
-                .orElseThrow(() -> new RuntimeException("Role is not exist"));
+                .orElseThrow(() -> new BackendServiceException(ErrorCode.ROLE_NOT_EXISTED));
     }
 
     @Override
     @Transactional
     public RoleDetailResponse createRole(RoleCreateRequest request) {
         if(roleRepository.existsByName(request.name()))
-            throw new RuntimeException("Role is already exist");
+            throw new BackendServiceException(ErrorCode.ROLE_EXISTED);
         Role savedRole = roleRepository.save(Role.builder()
                 .name(request.name())
                 .description(request.description())
@@ -71,7 +73,7 @@ public class RoleServiceImpl implements RoleService{
     @CacheEvict(value = "role_permissions", allEntries = true)
     public AssignPermissionResponse assignPermission(String roleId, AssignPermissionRequest request) {
         Role role = roleRepository.findById(roleId)
-                .orElseThrow(() -> new RuntimeException("Role is not exist"));
+                .orElseThrow(() -> new BackendServiceException(ErrorCode.ROLE_NOT_EXISTED));
         List<Permission> permissions = permissionRepository.findAllByNameIn(request.permissions());
         permissions.forEach(role::addPermission);
         Role savedRole = roleRepository.save(role);

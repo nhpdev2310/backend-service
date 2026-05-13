@@ -11,6 +11,8 @@ import com.nhpdev.backendservice.dto.response.UserUpdateResponse;
 import com.nhpdev.backendservice.entity.Role;
 import com.nhpdev.backendservice.entity.User;
 import com.nhpdev.backendservice.entity.UserHasRole;
+import com.nhpdev.backendservice.exception.BackendServiceException;
+import com.nhpdev.backendservice.exception.ErrorCode;
 import com.nhpdev.backendservice.repository.RoleRepository;
 import com.nhpdev.backendservice.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -31,9 +33,9 @@ public class UserServiceImpl implements UserService{
     @Override
     public UserDetailResponse createUser(UserCreateRequest request) {
         if(userRepository.existsUserByEmail(request.email()))
-            throw new RuntimeException("email is already being used");
+            throw new BackendServiceException(ErrorCode.USER_EXISTED);
         if(userRepository.existsUserByUsername(request.username()))
-            throw new RuntimeException("username is already being used");
+            throw new BackendServiceException(ErrorCode.USER_EXISTED);
         User newUser = User.builder()
                 .email(request.email())
                 .username(request.username())
@@ -64,13 +66,13 @@ public class UserServiceImpl implements UserService{
     @Transactional(readOnly = true)
     public UserDetailResponse getUserById(String id) {
         return userRepository.findById(id).map(this::mapToUserDetailResponse)
-                .orElseThrow(() -> new RuntimeException("User is not exist!"));
+                .orElseThrow(() -> new BackendServiceException(ErrorCode.USER_NOT_EXISTED));
     }
 
     @Override
     public UserUpdateResponse updateUser(String id, UserUpdateRequest request) {
         User user = userRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("User is not exist!"));
+                .orElseThrow(() -> new BackendServiceException(ErrorCode.USER_NOT_EXISTED));
         user.setUsername(request.username());
         User updatedUser = userRepository.save(user);
         return UserUpdateResponse.builder()
@@ -81,11 +83,11 @@ public class UserServiceImpl implements UserService{
     @Override
     public UserChangePasswordResponse changePassword(String id, UserChangePasswordRequest request) {
         User user = userRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("User is not exist!"));
+                .orElseThrow(() -> new BackendServiceException(ErrorCode.USER_NOT_EXISTED));
         if(!passwordEncoder.matches(request.oldPassword(), user.getPassword()))
-            throw new RuntimeException("Wrong password!");
+            throw new BackendServiceException(ErrorCode.UNAUTHORIZED);
         if(!request.newPassword().equals(request.newPassword2()))
-            throw new RuntimeException("New passwords unmatch");
+            throw new BackendServiceException(ErrorCode.UNAUTHORIZED);
         user.setPassword(passwordEncoder.encode(request.newPassword()));
         User updatedUser = userRepository.save(user);
         return UserChangePasswordResponse.builder()
@@ -97,16 +99,16 @@ public class UserServiceImpl implements UserService{
     @Override
     public void deleteUser(String id) {
         if (!userRepository.existsById(id))
-            throw new RuntimeException("User is not exist");
+            throw new BackendServiceException(ErrorCode.USER_NOT_EXISTED);
         userRepository.deleteById(id);
     }
 
     @Override
     public AssignRoleResponse assignRole(String userId, AssignRoleRequest request) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User is not exists"));
+                .orElseThrow(() -> new BackendServiceException(ErrorCode.USER_NOT_EXISTED));
         Role role = roleRepository.findRoleByName(request.roleName())
-                .orElseThrow(() -> new RuntimeException("Role is not exist"));
+                .orElseThrow(() -> new BackendServiceException(ErrorCode.ROLE_NOT_EXISTED));
         user.addRole(role);
         User savedUser = userRepository.save(user);
         return AssignRoleResponse.builder()
@@ -126,7 +128,7 @@ public class UserServiceImpl implements UserService{
                         .username(user.getUsername())
                         .status(user.getStatus().name())
                         .build())
-                .orElseThrow(() -> new RuntimeException("User is not exist"));
+                .orElseThrow(() -> new BackendServiceException(ErrorCode.USER_NOT_EXISTED));
     }
 
     private UserDetailResponse mapToUserDetailResponse(User user) {

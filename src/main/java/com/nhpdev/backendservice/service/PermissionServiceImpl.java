@@ -4,6 +4,8 @@ import com.nhpdev.backendservice.dto.request.PermissionCreateRequest;
 import com.nhpdev.backendservice.dto.request.PermissionDeletedRequest;
 import com.nhpdev.backendservice.dto.response.PermissionDetailResponse;
 import com.nhpdev.backendservice.entity.Permission;
+import com.nhpdev.backendservice.exception.BackendServiceException;
+import com.nhpdev.backendservice.exception.ErrorCode;
 import com.nhpdev.backendservice.repository.PermissionRepository;
 import com.nhpdev.backendservice.repository.RoleHasPermissionRepository;
 import lombok.RequiredArgsConstructor;
@@ -19,7 +21,7 @@ public class PermissionServiceImpl implements PermissionService{
     @Override
     public PermissionDetailResponse createPermission(PermissionCreateRequest request) {
         if(permissionRepository.existsByName(request.name()))
-            throw new RuntimeException("Permission name is already be used");
+            throw new BackendServiceException(ErrorCode.PERMISSION_EXISTED);
         Permission permission = Permission.builder()
                 .name(request.name())
                 .description(request.description())
@@ -46,7 +48,7 @@ public class PermissionServiceImpl implements PermissionService{
     @Override
     public void deletePermission(PermissionDeletedRequest request) {
         if(!permissionRepository.existsByName(request.permissionName()))
-            throw new RuntimeException("Permission is not exist");
+            throw new BackendServiceException(ErrorCode.PERMISSION_NOT_EXISTED);
         Permission permission = permissionRepository.findPermissionByName(request.permissionName());
         roleHasPermissionRepository.deleteByPermissionId(permission.getId());
     }

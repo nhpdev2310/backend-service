@@ -1,5 +1,7 @@
 package com.nhpdev.backendservice.security.authenticate;
 
+import com.nhpdev.backendservice.exception.BackendServiceException;
+import com.nhpdev.backendservice.exception.ErrorCode;
 import com.nhpdev.backendservice.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -17,8 +19,7 @@ public class UserDetailSeviceImpl implements UserDetailsService {
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
         return userRepository.findUsersByEmail(email)
                 .orElseThrow(() -> {
-                    log.error("User not found with email {}", email);
-                   return new UsernameNotFoundException(email + "not found!");
+                   return new BackendServiceException(ErrorCode.USER_NOT_EXISTED);
                 });
     }
 }

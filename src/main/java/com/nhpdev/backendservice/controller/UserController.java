@@ -7,6 +7,7 @@ import com.nhpdev.backendservice.dto.request.UserUpdateRequest;
 import com.nhpdev.backendservice.dto.response.*;
 import com.nhpdev.backendservice.service.UserService;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -24,7 +25,7 @@ public class UserController {
     private final UserService userService;
 
     @PostMapping
-    public ApiResponse<UserDetailResponse> createUser(@RequestBody UserCreateRequest request) {
+    public ApiResponse<UserDetailResponse> createUser(@RequestBody @Valid UserCreateRequest request) {
         return ApiResponse.<UserDetailResponse>builder()
                 .ok(true)
                 .data(userService.createUser(request))
